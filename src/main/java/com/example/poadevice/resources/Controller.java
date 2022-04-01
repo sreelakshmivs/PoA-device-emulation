@@ -2,6 +2,7 @@ package com.example.poadevice.resources;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Map;
 import com.example.poadevice.exceptions.BadGatewayException;
 import com.example.poadevice.exceptions.InternalServerErrorException;
 import com.example.poadevice.repositories.PoaRepository;
@@ -30,6 +31,9 @@ public class Controller {
     @Value("${subcontractor-poa-uri}")
     private String SUBCONTRACTOR_POA_URI;
 
+    @Value("${device-name}")
+    private String DEVICE_NAME;
+
     @Value("${public-key}")
     private Resource PUBLIC_KEY;
 
@@ -40,8 +44,12 @@ public class Controller {
 
     @GetMapping("/fetch-poa")
     public String fetchPoa() {
+
+        final Map<String, String> requestBody = Map.of(
+                "name", "poadevice",
+                "publicKey", readPublicKey());
+
         try {
-            final String requestBody = readPublicKey(); // TODO: Change!
             return restTemplate.postForObject(SUBCONTRACTOR_POA_URI, requestBody, String.class);
         } catch (Exception e) {
             e.printStackTrace();

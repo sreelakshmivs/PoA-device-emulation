@@ -12,7 +12,6 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import com.example.poadevice.domain.Poa;
 import com.example.poadevice.exceptions.InternalServerErrorException;
-import com.example.poadevice.exceptions.NotFoundException;
 
 @Repository
 public class PoaRepository {
