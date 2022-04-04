@@ -3,6 +3,7 @@ package com.example.poadevice.resources;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Map;
+import com.example.poadevice.domain.Poa;
 import com.example.poadevice.exceptions.BadGatewayException;
 import com.example.poadevice.exceptions.InternalServerErrorException;
 import com.example.poadevice.repositories.PoaRepository;
@@ -46,16 +47,27 @@ public class Controller {
     public String fetchPoa() {
 
         final Map<String, String> requestBody = Map.of(
-                "name", "poadevice",
+                "name", DEVICE_NAME,
                 "publicKey", readPublicKey());
 
         try {
-            return restTemplate.postForObject(SUBCONTRACTOR_POA_URI, requestBody, String.class);
+            final String poa = restTemplate.postForObject(SUBCONTRACTOR_POA_URI, requestBody, String.class);
+            poaRepository.write(poa);
+            return "PoA successfully retrieved from the subcontractor.";
         } catch (Exception e) {
             e.printStackTrace();
             throw new BadGatewayException(
                     "Failed to retrieve PoA from Arrowhead PoaOnboarding controller");
         }
+    }
+
+    @GetMapping("/poa")
+    public String poa() {
+        final Poa poa = poaRepository.readLatest();
+        if (poa == null) {
+            return null;
+        }
+        return poa.getPoa();
     }
 
     private String readPublicKey() {
