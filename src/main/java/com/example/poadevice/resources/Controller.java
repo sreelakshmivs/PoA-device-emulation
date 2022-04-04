@@ -43,6 +43,11 @@ public class Controller {
         return "OK";
     }
 
+    /**
+     * Prompt this system to fetch a PoA from a subcontractor.
+     *
+     * @return
+     */
     @GetMapping("/fetch-poa")
     public String fetchPoa() {
 
@@ -51,7 +56,8 @@ public class Controller {
                 "publicKey", readPublicKey());
 
         try {
-            final String poa = restTemplate.postForObject(SUBCONTRACTOR_POA_URI, requestBody, String.class);
+            final String poa =
+                    restTemplate.postForObject(SUBCONTRACTOR_POA_URI, requestBody, String.class);
             poaRepository.write(poa);
             return "PoA successfully retrieved from the subcontractor.";
         } catch (Exception e) {
@@ -61,6 +67,9 @@ public class Controller {
         }
     }
 
+    /**
+     * @return The most recently fetched PoA.
+     */
     @GetMapping("/poa")
     public String poa() {
         final Poa poa = poaRepository.readLatest();
@@ -70,11 +79,17 @@ public class Controller {
         return poa.getPoa();
     }
 
+    @GetMapping("/onboard")
+    public String onboard() {
+        return "To be implemented";
+    }
+
     private String readPublicKey() {
         try {
             String publicKey =
                     StreamUtils.copyToString(PUBLIC_KEY.getInputStream(), Charset.defaultCharset());
-            publicKey = publicKey.replaceAll("\\n", "").replace("-----BEGIN PUBLIC KEY-----", "")
+            publicKey = publicKey.replaceAll("\\n", "")
+                    .replace("-----BEGIN PUBLIC KEY-----", "")
                     .replace("-----END PUBLIC KEY-----", "");
             return publicKey;
         } catch (IOException e) {
