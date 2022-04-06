@@ -1,16 +1,22 @@
 package com.example.poadevice.resources;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.util.Base64;
 import java.util.Map;
 import com.example.poadevice.domain.Poa;
 import com.example.poadevice.exceptions.BadGatewayException;
 import com.example.poadevice.exceptions.InternalServerErrorException;
+import com.example.poadevice.exceptions.UnauthorizedException;
 import com.example.poadevice.repositories.PoaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,8 +41,14 @@ public class Controller {
     @Value("${device-name}")
     private String DEVICE_NAME;
 
-    @Value("${public-key}")
-    private Resource PUBLIC_KEY;
+    @Value("${server.ssl.key-store}")
+    private Resource KEY_STORE;
+
+    @Value("${server.ssl.key-password}")
+    private String KEY_PASSWORD;
+
+    @Value("${server.ssl.key-store-password}")
+    private String KEY_STORE_PASSWORD;
 
     @GetMapping("/echo")
     public String echo() {
@@ -51,9 +63,18 @@ public class Controller {
     @GetMapping("/fetch-poa")
     public String fetchPoa() {
 
+        PublicKey publicKey;
+        try {
+            publicKey = readPublicKey();
+        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException
+                | IOException e) {
+            e.printStackTrace();
+            throw new InternalServerErrorException("Failed to read public key");
+        }
+
         final Map<String, String> requestBody = Map.of(
                 "name", DEVICE_NAME,
-                "publicKey", readPublicKey());
+                "publicKey", toString(publicKey));
 
         try {
             final String poa =
@@ -81,20 +102,34 @@ public class Controller {
 
     @GetMapping("/onboard")
     public String onboard() {
-        return "To be implemented";
+        final String poa = poaRepository.readLatest().getPoa();
+        if (poa == null) {
+            throw new UnauthorizedException("No power of attorney present");
+        }
+        try {
+            final Map<String, String> requestBody = Map.of("poa", poa);
+            return "Onboarding result: " + restTemplate.postForObject(AH_ONBOARDING_URI, requestBody, String.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new BadGatewayException("Failed to onboard");
+        }
     }
 
-    private String readPublicKey() {
-        try {
-            String publicKey =
-                    StreamUtils.copyToString(PUBLIC_KEY.getInputStream(), Charset.defaultCharset());
-            publicKey = publicKey.replaceAll("\\n", "")
-                    .replace("-----BEGIN PUBLIC KEY-----", "")
-                    .replace("-----END PUBLIC KEY-----", "");
-            return publicKey;
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new InternalServerErrorException("Failed to read public key");
-        }
+    private PublicKey readPublicKey()
+            throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
+        final KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(KEY_STORE.getInputStream(), KEY_STORE_PASSWORD.toCharArray());
+        return extractPublicKey(keyStore);
+    }
+
+    private PublicKey extractPublicKey(final KeyStore keyStore) throws KeyStoreException {
+        final String alias = keyStore.aliases().nextElement();
+        final Certificate certificate = keyStore.getCertificate(alias);
+        return certificate.getPublicKey();
+    }
+
+    private String toString(final PublicKey key) {
+        final byte[] encodedKey = key.getEncoded();
+        return Base64.getEncoder().encodeToString(encodedKey);
     }
 }
