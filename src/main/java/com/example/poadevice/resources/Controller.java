@@ -1,10 +1,13 @@
 package com.example.poadevice.resources;
 
 import java.io.IOException;
+import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.Base64;
@@ -63,15 +66,7 @@ public class Controller {
     @GetMapping("/fetch-poa")
     public String fetchPoa() {
 
-        PublicKey publicKey;
-        try {
-            publicKey = readPublicKey();
-        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException
-                | IOException e) {
-            e.printStackTrace();
-            throw new InternalServerErrorException("Failed to read public key");
-        }
-
+        final PublicKey publicKey = readPublicKey();
         final Map<String, String> requestBody = Map.of(
                 "name", DEVICE_NAME,
                 "publicKey", toString(publicKey));
@@ -106,8 +101,12 @@ public class Controller {
         if (poa == null) {
             throw new UnauthorizedException("No power of attorney present");
         }
+        final PrivateKey privateKey = readPrivateKey();
+
         try {
-            final Map<String, String> requestBody = Map.of("poa", poa);
+            final Map<String, String> requestBody = Map.of(
+                "poa", poa,
+                "privateKey", toString(privateKey));
             return "Onboarding result: " + restTemplate.postForObject(AH_ONBOARDING_URI, requestBody, String.class);
         } catch (Exception e) {
             e.printStackTrace();
@@ -115,20 +114,41 @@ public class Controller {
         }
     }
 
-    private PublicKey readPublicKey()
-            throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
-        final KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(KEY_STORE.getInputStream(), KEY_STORE_PASSWORD.toCharArray());
-        return extractPublicKey(keyStore);
+    private PrivateKey readPrivateKey() {
+        final KeyStore keyStore = readKeyStore();
+        try {
+            final String alias = keyStore.aliases().nextElement();
+            return (PrivateKey) keyStore.getKey(alias, KEY_STORE_PASSWORD.toCharArray());
+        } catch (KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            throw new InternalServerErrorException("Failed to read private key");
+        }
     }
 
-    private PublicKey extractPublicKey(final KeyStore keyStore) throws KeyStoreException {
-        final String alias = keyStore.aliases().nextElement();
-        final Certificate certificate = keyStore.getCertificate(alias);
-        return certificate.getPublicKey();
+    private PublicKey readPublicKey() {
+        final KeyStore keyStore = readKeyStore();
+        try {
+            final String alias = keyStore.aliases().nextElement();
+            final Certificate certificate = keyStore.getCertificate(alias);
+            return certificate.getPublicKey();
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+            throw new InternalServerErrorException("Failed to read public key");
+        }
     }
 
-    private String toString(final PublicKey key) {
+    private KeyStore readKeyStore() {
+        try {
+            final KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            keyStore.load(KEY_STORE.getInputStream(), KEY_STORE_PASSWORD.toCharArray());
+        return keyStore;
+        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+            e.printStackTrace();
+            throw new InternalServerErrorException("Failed to read key store");
+        }
+    }
+
+    private String toString(final Key key) {
         final byte[] encodedKey = key.getEncoded();
         return Base64.getEncoder().encodeToString(encodedKey);
     }
