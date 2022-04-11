@@ -1,29 +1,15 @@
 package com.example.poadevice.resources;
 
-import java.io.IOException;
-import java.security.Key;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
-import com.example.poadevice.CsrResponse;
+import com.example.poadevice.domain.OnboardingService;
 import com.example.poadevice.domain.Poa;
 import com.example.poadevice.exceptions.BadGatewayException;
-import com.example.poadevice.exceptions.InternalServerErrorException;
 import com.example.poadevice.exceptions.UnauthorizedException;
 import com.example.poadevice.repositories.PoaRepository;
+import com.example.poadevice.security.KeyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,28 +20,22 @@ import org.springframework.web.client.RestTemplate;
 public class Controller {
 
     @Autowired
-    PoaRepository poaRepository;
+    private PoaRepository poaRepository;
 
     @Autowired
-    RestTemplate restTemplate;
+    private RestTemplate restTemplate;
 
-    @Value("${ah-onboarding-uri}")
-    private String AH_ONBOARDING_URI;
+    @Autowired
+    private KeyService keyService;
+
+    @Autowired
+    OnboardingService onboardingService;
 
     @Value("${subcontractor-poa-uri}")
     private String SUBCONTRACTOR_POA_URI;
 
     @Value("${device-name}")
     private String DEVICE_NAME;
-
-    @Value("${server.ssl.key-store}")
-    private Resource KEY_STORE;
-
-    @Value("${server.ssl.key-password}")
-    private String KEY_PASSWORD;
-
-    @Value("${server.ssl.key-store-password}")
-    private String KEY_STORE_PASSWORD;
 
     @GetMapping("/echo")
     public String echo() {
@@ -70,10 +50,10 @@ public class Controller {
     @GetMapping("/fetch-poa")
     public String fetchPoa() {
 
-        final PublicKey publicKey = readPublicKey();
+        final String publicKey = keyService.readPublicKey();
         final Map<String, String> requestBody = Map.of(
                 "name", DEVICE_NAME,
-                "publicKey", toString(publicKey));
+                "publicKey", publicKey);
 
         try {
             final String poa =
@@ -87,9 +67,6 @@ public class Controller {
         }
     }
 
-    /**
-     * @return The most recently fetched PoA.
-     */
     @GetMapping("/poa")
     public String poa() {
         final Poa poa = poaRepository.readLatest();
@@ -106,67 +83,9 @@ public class Controller {
             throw new UnauthorizedException("No power of attorney present");
         }
 
-        final String publicKey = toString(readPublicKey());
-        final String privateKey = toString(readPrivateKey());
-
-        final HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        final Map<String, String> keyPair = new HashMap<>();
-        keyPair.put("keyAlgorithm", "SHA256WithRSA");
-        keyPair.put("keyFormat", "PKCS#8");
-        keyPair.put("publicKey", publicKey);
-        keyPair.put("privateKey", privateKey);
-        final Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("poa", poa);
-        requestBody.put("keyPair", keyPair);
-
-        try {
-            CsrResponse csrResponse = restTemplate.postForObject(AH_ONBOARDING_URI, requestBody, CsrResponse.class);
-            System.out.println(csrResponse.getId());
-            System.out.println(csrResponse.getCertificateChain());
-            return "OK";
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new BadGatewayException("Failed to onboard");
-        }
-    }
-
-    private PrivateKey readPrivateKey() {
-        final KeyStore keyStore = readKeyStore();
-        try {
-            final String alias = keyStore.aliases().nextElement();
-            return (PrivateKey) keyStore.getKey(alias, KEY_STORE_PASSWORD.toCharArray());
-        } catch (KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            throw new InternalServerErrorException("Failed to read private key");
-        }
-    }
-
-    private PublicKey readPublicKey() {
-        final KeyStore keyStore = readKeyStore();
-        try {
-            final String alias = keyStore.aliases().nextElement();
-            final Certificate certificate = keyStore.getCertificate(alias);
-            return certificate.getPublicKey();
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-            throw new InternalServerErrorException("Failed to read public key");
-        }
-    }
-
-    private KeyStore readKeyStore() {
-        try {
-            final KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(KEY_STORE.getInputStream(), KEY_STORE_PASSWORD.toCharArray());
-        return keyStore;
-        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
-            e.printStackTrace();
-            throw new InternalServerErrorException("Failed to read key store");
-        }
-    }
-
-    private String toString(final Key key) {
-        final byte[] encodedKey = key.getEncoded();
-        return Base64.getEncoder().encodeToString(encodedKey);
+        final String ahCertificate = onboardingService.requestAhCertificate(poa);
+        
+        System.out.println(ahCertificate); // TODO: Store the certificate instead
+        return "OK";
     }
 }
