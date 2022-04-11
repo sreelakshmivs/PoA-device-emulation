@@ -11,7 +11,9 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
+import com.example.poadevice.CsrResponse;
 import com.example.poadevice.domain.Poa;
 import com.example.poadevice.exceptions.BadGatewayException;
 import com.example.poadevice.exceptions.InternalServerErrorException;
@@ -20,6 +22,8 @@ import com.example.poadevice.repositories.PoaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -101,13 +105,26 @@ public class Controller {
         if (poa == null) {
             throw new UnauthorizedException("No power of attorney present");
         }
-        final PrivateKey privateKey = readPrivateKey();
+
+        final String publicKey = toString(readPublicKey());
+        final String privateKey = toString(readPrivateKey());
+
+        final HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        final Map<String, String> keyPair = new HashMap<>();
+        keyPair.put("keyAlgorithm", "SHA256WithRSA");
+        keyPair.put("keyFormat", "PKCS#8");
+        keyPair.put("publicKey", publicKey);
+        keyPair.put("privateKey", privateKey);
+        final Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("poa", poa);
+        requestBody.put("keyPair", keyPair);
 
         try {
-            final Map<String, String> requestBody = Map.of(
-                "poa", poa,
-                "privateKey", toString(privateKey));
-            return "Onboarding result: " + restTemplate.postForObject(AH_ONBOARDING_URI, requestBody, String.class);
+            CsrResponse csrResponse = restTemplate.postForObject(AH_ONBOARDING_URI, requestBody, CsrResponse.class);
+            System.out.println(csrResponse.getId());
+            System.out.println(csrResponse.getCertificateChain());
+            return "OK";
         } catch (Exception e) {
             e.printStackTrace();
             throw new BadGatewayException("Failed to onboard");
