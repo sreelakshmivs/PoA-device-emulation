@@ -1,4 +1,4 @@
-package com.example.poadevice;
+package com.example.poadevice.domain;
 
 import java.util.List;
 import java.io.Serializable;

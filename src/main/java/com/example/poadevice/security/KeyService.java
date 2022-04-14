@@ -4,6 +4,7 @@ import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
 import com.example.poadevice.exceptions.InternalServerErrorException;
@@ -28,29 +29,38 @@ public class KeyService {
     @Value("${server.ssl.key-store-password}")
     private String KEY_STORE_PASSWORD;
 
-	public String readPrivateKey() {
+    public PrivateKey readPrivateKey() {
         final KeyStore keyStore = readKeyStore();
         try {
             final String alias = keyStore.aliases().nextElement();
-            final Key privateKey = keyStore.getKey(alias, KEY_STORE_PASSWORD.toCharArray());
-			return toString(privateKey);
+            final PrivateKey privateKey =
+                    (PrivateKey) keyStore.getKey(alias, KEY_STORE_PASSWORD.toCharArray());
+            return privateKey;
         } catch (KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException e) {
             e.printStackTrace();
             throw new InternalServerErrorException("Failed to read private key");
         }
     }
 
-    public String readPublicKey() {
+    public PublicKey readPublicKey() {
         final KeyStore keyStore = readKeyStore();
         try {
             final String alias = keyStore.aliases().nextElement();
             final Certificate certificate = keyStore.getCertificate(alias);
             final PublicKey publicKey = certificate.getPublicKey();
-			return toString(publicKey);
+			return publicKey;
         } catch (KeyStoreException e) {
             e.printStackTrace();
             throw new InternalServerErrorException("Failed to read public key");
-        }
+        }  
+    }
+
+    public String readPrivateKeyAsString() {
+        return toString(readPrivateKey());
+    }
+
+    public String readPublicKeyAsString() {
+        return toString(readPublicKey());
     }
 
 	private KeyStore readKeyStore() {

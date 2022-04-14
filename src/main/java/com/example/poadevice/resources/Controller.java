@@ -9,7 +9,6 @@ import com.example.poadevice.repositories.PoaRepository;
 import com.example.poadevice.security.KeyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,6 +30,9 @@ public class Controller {
     @Autowired
     OnboardingService onboardingService;
 
+    @Value("${server.ssl.key-store-password}")
+    private String KEY_STORE_PASSWORD;
+
     @Value("${subcontractor-poa-uri}")
     private String SUBCONTRACTOR_POA_URI;
 
@@ -50,7 +52,7 @@ public class Controller {
     @GetMapping("/fetch-poa")
     public String fetchPoa() {
 
-        final String publicKey = keyService.readPublicKey();
+        final String publicKey = keyService.readPublicKeyAsString();
         final Map<String, String> requestBody = Map.of(
                 "name", DEVICE_NAME,
                 "publicKey", publicKey);
@@ -82,10 +84,7 @@ public class Controller {
         if (poa == null) {
             throw new UnauthorizedException("No power of attorney present");
         }
-
         final String ahCertificate = onboardingService.requestAhCertificate(poa);
-        
-        System.out.println(ahCertificate); // TODO: Store the certificate instead
         return "OK";
     }
 }

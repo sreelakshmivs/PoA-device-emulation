@@ -1,7 +1,6 @@
 package com.example.poadevice.domain;
 
 import java.util.Map;
-import com.example.poadevice.CsrResponse;
 import com.example.poadevice.exceptions.BadGatewayException;
 import com.example.poadevice.security.KeyService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,10 +27,10 @@ public class OnboardingService {
 		final HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		final Map<String, String> keyPair = Map.of(
-				"keyAlgorithm", "SHA256WithRSA",
-				"keyFormat", "PKCS#8",
-				"publicKey", keyService.readPublicKey(),
-				"privateKey", keyService.readPrivateKey());
+				"keyAlgorithm", "SHA256WithRSA", // TODO: Should not be hardcoded
+				"keyFormat", "PKCS#8", // TODO: Should not be hardcoded
+				"publicKey", keyService.readPublicKeyAsString(),
+				"privateKey", keyService.readPrivateKeyAsString());
 
 		final Map<String, Object> requestBody = Map.of(
 				"poa", poa,
