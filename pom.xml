@@ -16,6 +16,7 @@
 	<properties>
 		<java.version>11</java.version>
 		<http.client.version>4.5.8</http.client.version>
+		<bouncy.castle.version>1.69</bouncy.castle.version>
 	</properties>
 
 	<dependencies>
@@ -52,6 +53,12 @@
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
 			<version>${http.client.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpkix-jdk15on</artifactId>
+			<version>${bouncy.castle.version}</version>
+			<scope>compile</scope>
 		</dependency>
 	</dependencies>
 

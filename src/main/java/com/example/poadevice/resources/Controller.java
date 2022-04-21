@@ -3,12 +3,15 @@ package com.example.poadevice.resources;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.util.List;
 import java.util.Map;
 import com.example.poadevice.domain.OnboardingService;
 import com.example.poadevice.domain.Poa;
@@ -52,6 +55,12 @@ public class Controller {
 
     @Value("${device-name}")
     private String DEVICE_NAME;
+
+    @Value("${location-provider-jar}")
+    private String LOCATION_PROVIDER_JAR;
+
+    @Value("${device-certificate-output-file}")
+    private String CERTIFICATE_FILE;
 
     @GetMapping("/echo")
     public String echo() {
@@ -99,50 +108,55 @@ public class Controller {
             throw new UnauthorizedException("No power of attorney present");
         }
 
-        final String ahCertificate = onboardingService.requestAhCertificate(poa);
+        final List<String> ahCertificates = onboardingService.requestAhCertificates(poa);
         
         try {
-            removeMe(ahCertificate);
+            launchLocationProvider(ahCertificates);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new InternalServerErrorException("GAH!");
+            throw new InternalServerErrorException("Something went wrong");
         }
 
         return "OK";
     }
 
-    private void removeMe(String certificate) throws IOException, CertificateException, KeyStoreException, NoSuchAlgorithmException {
-        System.out.println(certificate);
-        certificate = "-----BEGIN CERTIFICATE-----\n" + certificate + "\n-----END CERTIFICATE-----";
+    private void launchLocationProvider(List<String> certificateChain) throws IOException, CertificateException, KeyStoreException, NoSuchAlgorithmException {
+        Certificate[] x509Certificates = new Certificate[certificateChain.size()];
 
+        for (int i = 0; i < certificateChain.size(); i++) {
+            final String certificate = certificateChain.get(i);
         // Get the certificate
-        StringReader certificateReader = new StringReader(certificate);
+        StringReader certificateReader = new StringReader("-----BEGIN CERTIFICATE-----\n" + certificate + "\n-----END CERTIFICATE-----");
         PEMParser certificateParser = new PEMParser(certificateReader);
 
         X509CertificateHolder certificateHolder = (X509CertificateHolder) certificateParser.readObject();
-        java.security.cert.Certificate X509Certificate =
+        Certificate x509Certificate =
             new JcaX509CertificateConverter()
                 .setProvider(new BouncyCastleProvider())
                 .getCertificate(certificateHolder);
 
+        x509Certificates[i] = x509Certificate;
+
         certificateParser.close();
         certificateReader.close();
+        }
 
         // Put them into a PKCS12 keystore and write it to a byte[]
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
         PrivateKey key = keyService.readPrivateKey();
         keyStore.load(null);
-        // TODO: Use real device name instead of hardcoded value
-        keyStore.setKeyEntry("poadevice", key, KEY_STORE_PASSWORD.toCharArray(),
-            new java.security.cert.Certificate[]{X509Certificate});
+
+        keyStore.setKeyEntry(DEVICE_NAME, key, KEY_STORE_PASSWORD.toCharArray(), x509Certificates);
         keyStore.store(outputStream, KEY_STORE_PASSWORD.toCharArray());
         outputStream.close();
 
-        FileOutputStream fileOutputStream = new FileOutputStream("/home/nicnys/Projects/arrowhead/sos-examples-spring/demo-car/demo-car-provider/src/main/resources/certificates/locationprovider.p12");
+        FileOutputStream fileOutputStream = new FileOutputStream(CERTIFICATE_FILE);
         keyStore.store(fileOutputStream, KEY_STORE_PASSWORD.toCharArray());
         fileOutputStream.close();
 
-        // return bos.toByteArray();
+        Process proc = new ProcessBuilder("java", "-Dserver.ssl.key-store=file:" + CERTIFICATE_FILE, "-jar", LOCATION_PROVIDER_JAR).start();
+        OutputStream out = proc.getOutputStream();  
+        out.flush();
     }
 }

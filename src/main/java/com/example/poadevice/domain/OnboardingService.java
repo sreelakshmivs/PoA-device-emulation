@@ -1,5 +1,6 @@
 package com.example.poadevice.domain;
 
+import java.util.List;
 import java.util.Map;
 import com.example.poadevice.exceptions.BadGatewayException;
 import com.example.poadevice.security.KeyService;
@@ -22,7 +23,7 @@ public class OnboardingService {
 	@Autowired
 	private KeyService keyService;
 
-	public String requestAhCertificate(final String poa) {
+	public List<String> requestAhCertificates(final String poa) {
 
 		final HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
@@ -39,7 +40,7 @@ public class OnboardingService {
 		try {
 			final CsrResponse csrResponse =
 					restTemplate.postForObject(AH_ONBOARDING_URI, requestBody, CsrResponse.class);
-			return csrResponse.getCertificateChain().get(0);
+			return csrResponse.getCertificateChain();
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new BadGatewayException("Failed to onboard");
