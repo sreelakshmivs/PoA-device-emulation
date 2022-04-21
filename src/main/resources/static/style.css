@@ -1,0 +1,24 @@
+button {
+    position: absolute;
+    width: 90%;
+    left: 5%;
+    font-size: 80px;
+    height: 200px;
+}
+
+#onboard {
+    top: 50px;
+}
+
+#fetch-poa {
+    top: 300px;
+}
+
+#token {
+    background-color: #f4f4f6;
+    position: absolute;
+    width: 90%;
+    left: 5%;
+    top: 550px;
+    overflow: hidden;
+}
