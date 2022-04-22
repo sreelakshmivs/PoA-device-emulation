@@ -2,22 +2,15 @@
     margin-top: 50px;
 }
 
+#progress-bar-container {
+    margin-top: 50px;
+}
+
 #token {
     margin-top: 50px;
 }
 
-#jwt {
+#token-text {
     margin-top: 10px;
     width: 100%;
-}
-
-#providing-location {
-    display: none;
-    position: absolute;
-    top: 50px;
-    width: 90%;
-    left: 5%;
-    font-size: 64px;
-    height: 200px;
-    text-align: center;
 }
