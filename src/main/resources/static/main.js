@@ -2,6 +2,7 @@ const fetchPoaButton = document.getElementById("fetch-poa");
 const certificateButton = document.getElementById("fetch-certificate");
 const provideLocationButton = document.getElementById("provide-location");
 const tokenDisplay = document.getElementById("token");
+const jwtDisplay = document.getElementById("jwt");
 const providingLocationMessage = document.getElementById("providing-location");
 
 fetchPoaButton.onclick = () => {
@@ -40,25 +41,34 @@ function parseJwt(token) {
 
 function certificateFetchingStage(token) {
   displayToken(token);
-  fetchPoaButton.style.display = "none";
-  certificateButton.style.display = "inline-block";
+  hide(fetchPoaButton);
+  show(certificateButton);
 }
 
 function readyToProvideLocationStage() {
-  certificateButton.style.display = "none";
-  provideLocationButton.style.display = "inline-block";
-  tokenDisplay.style.display = "none";
+  hide(certificateButton);
+  hide(tokenDisplay);
+  show(provideLocationButton);
 }
 
 function displayToken(token) {
   const parsedToken = parseJwt(token);
   const jsonString = JSON.stringify(parsedToken, null, 4);
-  tokenDisplay.innerHTML = jsonString;
+  jwtDisplay.innerHTML = jsonString;
+  show(tokenDisplay);
 }
 
 function providingLocationStage() {
-    provideLocationButton.style.display = "none";
-    providingLocationMessage.style.display = "inline-block";
+    hide(provideLocationButton);
+    show(providingLocationMessage);
+}
+
+function show(element) {
+    element.classList.remove("d-none");
+}
+
+function hide(element) {
+    element.classList.add("d-none");
 }
 
 function handleError(e) {

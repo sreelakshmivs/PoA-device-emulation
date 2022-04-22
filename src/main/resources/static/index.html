@@ -1,18 +1,46 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
+    <!-- Required meta tags -->
     <meta charset="utf-8">
-    <title>title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>Admin Area | Dashboard</title>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
     <link rel="stylesheet" href="style.css">
-    <script src="main.js" defer></script>
+    <title>Hello, world!</title>
   </head>
   <body>
-    <Button id="fetch-poa">Fetch Permit</Button>
-    <Button id="fetch-certificate">Fetch Certificate</Button>
-    <Button id="provide-location">Provide Location Service</Button>
-    <pre>
-      <code id="token"></code>
-    </pre>
-    <h1 id="providing-location">Providing Location...</h1>
+    
+    <nav class="navbar navbar-dark bg-dark">
+      <a class="navbar-brand" href="#">Demo Device</a>
+    </nav>
+
+    <div id="contents" class="container">
+      <button id="fetch-poa" type="button" class="btn btn-primary btn-lg btn-block">Fetch Permit</button>
+      <button id="fetch-certificate" type="button" class="btn btn-primary btn-lg btn-block d-none">Fetch Certificate</button>
+      <button id="provide-location" type="button" class="btn btn-primary btn-lg btn-block d-none">Provide Location Service</button>
+
+      <div id="token" class="d-none">
+        <div class="btn-group" role="group" aria-label="Basic example">
+          <button type="button" class="btn btn-primary">JWT</button>
+          <button type="button" class="btn btn-success">JSON</button>
+        </div>
+        <textarea id="jwt" name="" rows="10"></textarea>
+        <h1 id="providing-location" class="d-none">Providing Location...</h1>
+      </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    <script src="main.js" defer></script>
+
+    <!--
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
+    -->
   </body>
 </html>

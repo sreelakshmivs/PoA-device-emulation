@@ -1,27 +1,14 @@
-button {
-    position: absolute;
-    top: 50px;
-    width: 90%;
-    left: 5%;
-    font-size: 64px;
-    height: 200px;
-}
-
-#fetch-certificate {
-    display: none;
-}
-
-#provide-location {
-    display: none;
+#contents {
+    margin-top: 50px;
 }
 
 #token {
-    background-color: #f4f4f6;
-    position: absolute;
-    width: 90%;
-    left: 5%;
-    top: 350px;
-    overflow: hidden;
+    margin-top: 50px;
+}
+
+#jwt {
+    margin-top: 10px;
+    width: 100%;
 }
 
 #providing-location {
