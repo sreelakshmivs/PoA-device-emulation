@@ -101,17 +101,17 @@ public class Controller {
         return poa.getPoa();
     }
 
-    @GetMapping("/onboard")
-    public String onboard() {
+    @GetMapping("/fetch-certificate")
+    public String fetchCertificate() {
         final String poa = poaRepository.readLatest().getPoa();
         if (poa == null) {
             throw new UnauthorizedException("No power of attorney present");
         }
 
         final List<String> ahCertificates = onboardingService.requestAhCertificates(poa);
-        
+
         try {
-            launchLocationProvider(ahCertificates);
+            saveCertificate(ahCertificates);
         } catch (Exception e) {
             e.printStackTrace();
             throw new InternalServerErrorException("Something went wrong");
@@ -120,43 +120,52 @@ public class Controller {
         return "OK";
     }
 
-    private void launchLocationProvider(List<String> certificateChain) throws IOException, CertificateException, KeyStoreException, NoSuchAlgorithmException {
+    @GetMapping("/provide-location")
+    public String onboard() throws IOException {
+
+        final Process proc =
+                new ProcessBuilder("java", "-Dserver.ssl.key-store=file:" + CERTIFICATE_FILE,
+                        "-jar", LOCATION_PROVIDER_JAR).start();
+        final OutputStream out = proc.getOutputStream();
+        out.flush();
+        return "OK";
+    }
+
+
+    private void saveCertificate(List<String> certificateChain)
+            throws IOException, CertificateException, KeyStoreException, NoSuchAlgorithmException {
         Certificate[] x509Certificates = new Certificate[certificateChain.size()];
 
         for (int i = 0; i < certificateChain.size(); i++) {
             final String certificate = certificateChain.get(i);
-        // Get the certificate
-        StringReader certificateReader = new StringReader("-----BEGIN CERTIFICATE-----\n" + certificate + "\n-----END CERTIFICATE-----");
-        PEMParser certificateParser = new PEMParser(certificateReader);
+            final StringReader certificateReader = new StringReader(
+                    "-----BEGIN CERTIFICATE-----\n" + certificate + "\n-----END CERTIFICATE-----");
+            final PEMParser certificateParser = new PEMParser(certificateReader);
 
-        X509CertificateHolder certificateHolder = (X509CertificateHolder) certificateParser.readObject();
-        Certificate x509Certificate =
-            new JcaX509CertificateConverter()
-                .setProvider(new BouncyCastleProvider())
-                .getCertificate(certificateHolder);
+            final X509CertificateHolder certificateHolder =
+                    (X509CertificateHolder) certificateParser.readObject();
+            final Certificate x509Certificate =
+                    new JcaX509CertificateConverter()
+                            .setProvider(new BouncyCastleProvider())
+                            .getCertificate(certificateHolder);
 
-        x509Certificates[i] = x509Certificate;
+            x509Certificates[i] = x509Certificate;
 
-        certificateParser.close();
-        certificateReader.close();
+            certificateParser.close();
+            certificateReader.close();
         }
 
-        // Put them into a PKCS12 keystore and write it to a byte[]
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        PrivateKey key = keyService.readPrivateKey();
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        final PrivateKey key = keyService.readPrivateKey();
         keyStore.load(null);
 
         keyStore.setKeyEntry(DEVICE_NAME, key, KEY_STORE_PASSWORD.toCharArray(), x509Certificates);
         keyStore.store(outputStream, KEY_STORE_PASSWORD.toCharArray());
         outputStream.close();
 
-        FileOutputStream fileOutputStream = new FileOutputStream(CERTIFICATE_FILE);
+        final FileOutputStream fileOutputStream = new FileOutputStream(CERTIFICATE_FILE);
         keyStore.store(fileOutputStream, KEY_STORE_PASSWORD.toCharArray());
         fileOutputStream.close();
-
-        Process proc = new ProcessBuilder("java", "-Dserver.ssl.key-store=file:" + CERTIFICATE_FILE, "-jar", LOCATION_PROVIDER_JAR).start();
-        OutputStream out = proc.getOutputStream();  
-        out.flush();
     }
 }

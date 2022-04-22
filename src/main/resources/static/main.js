@@ -1,26 +1,34 @@
 const fetchPoaButton = document.getElementById("fetch-poa");
-const onboardButton = document.getElementById("onboard");
+const certificateButton = document.getElementById("fetch-certificate");
+const provideLocationButton = document.getElementById("provide-location");
 const tokenDisplay = document.getElementById("token");
+const providingLocationMessage = document.getElementById("providing-location");
 
 fetchPoaButton.onclick = () => {
   fetchPoaButton.disabled = true;
   fetch("/device/fetch-poa")
-    .then(() => {
-      console.log("Fetched PoA!");
-    })
     .then(() => fetch("/device/poa"))
     .then((response) => response.text())
     .then((token) => {
-      const parsedToken = parseJwt(token);
-      const jsonString = JSON.stringify(parsedToken, null, 4);
-      tokenDisplay.innerHTML = jsonString;
-      onboardButton.disabled = false;
+      certificateFetchingStage(token);
     })
-    .catch((e) => {
-      console.log(e);
-      fetchPoaButton.disabled = true;
-    });
+    .catch(handleError);
 };
+
+certificateButton.onclick = () => {
+  certificateButton.disabled = true;
+  fetch("/device/fetch-certificate")
+  .then(readyToProvideLocationStage)
+  .catch(handleError);
+};
+
+provideLocationButton.onclick = () => {
+    certificateButton.disabled = true;
+    fetch("/device/provide-location")
+    .then(providingLocationStage)
+    .catch(handleError);
+  };
+
 
 function parseJwt(token) {
   try {
@@ -30,15 +38,30 @@ function parseJwt(token) {
   }
 }
 
-onboardButton.onclick = () => {
-  onboardButton.disabled = true;
+function certificateFetchingStage(token) {
+  displayToken(token);
+  fetchPoaButton.style.display = "none";
+  certificateButton.style.display = "inline-block";
+}
 
-  fetch("/device/onboard")
-    .then(() => {
-      console.log("Onboarded!");
-    })
-    .catch((e) => {
-      console.log(e);
-      onboardButton.disabled = true;
-    });
-};
+function readyToProvideLocationStage() {
+  certificateButton.style.display = "none";
+  provideLocationButton.style.display = "inline-block";
+  tokenDisplay.style.display = "none";
+}
+
+function displayToken(token) {
+  const parsedToken = parseJwt(token);
+  const jsonString = JSON.stringify(parsedToken, null, 4);
+  tokenDisplay.innerHTML = jsonString;
+}
+
+function providingLocationStage() {
+    provideLocationButton.style.display = "none";
+    providingLocationMessage.style.display = "inline-block";
+}
+
+function handleError(e) {
+  console.log(e);
+  alert("Something went wrong");
+}
