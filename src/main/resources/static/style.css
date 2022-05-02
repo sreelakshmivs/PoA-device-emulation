@@ -6,11 +6,12 @@
     margin-top: 50px;
 }
 
-#token {
-    margin-top: 50px;
-}
-
 #token-text {
     margin-top: 10px;
+    width: 100%;
+}
+
+.main-btn {
+    margin-bottom: 50px;
     width: 100%;
 }

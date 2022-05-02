@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="style.css">
     <title>Demo Device</title>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
@@ -16,7 +16,12 @@
     
     <nav class="navbar navbar-dark bg-dark">
       <div class="container">
-        <a class="navbar-brand" href="#">Demo Device</a>
+        <a class="navbar-brand" href="#">
+          <span>
+            <i class="pull-right bi-phone"></i>
+            Demo Device
+          </span>
+        </a>
       </div>
     </nav>
 
@@ -28,39 +33,90 @@
 
     <div id="contents" class="container">
 
-      <button id="fetch-poa" type="button" class="btn btn-primary btn-lg btn-block">
-        <i class="bi-cloud-download"></i>
-        Download Power of Attorney
-      </button>
-      <button id="fetch-certificate" type="button" class="btn btn-primary btn-lg btn-block d-none">
-        <i class="bi-cloud-download"></i>
-        Download Certificate
-      </button>
-      <button id="provide-location" type="button" class="btn btn-primary btn-lg btn-block d-none">
-        <i class="bi-geo-alt"></i>
-        Provide Location Service
-      </button>
-
-      <div id="token" class="d-none">
-        
-        <div class="btn-group" role="group" aria-label="Basic example">
-          <button id="display-jwt" type="button" class="btn btn-outline-primary">JWT</button>
-          <button id="display-json" type="button" class="btn btn-outline-primary">JSON</button>
+      <div id="fetch-poa-stage">
+        <button id="fetch-poa" type="button" class="main-btn btn btn-primary btn-lg btn-block">
+          <i class="bi-cloud-download"></i>
+          Request Power of Attorney
+        </button>
+        <div class="alert alert-primary" role="alert">
+          <p>Before onboarding to an Arrowhead cloud, please request a <i>Power of Attorney</i> from your subcontractor.</p>
         </div>
-        <textarea id="token-text" name="" rows="10"></textarea>
       </div>
 
-      <div id="providing-location" class="alert alert-success d-none" role="alert">
-        <h4 class="alert-heading">
-          <span>
-            <i class="pull-right bi-check-circle"></i>
-            Success!
-          </span>
-        </h4>
-        <p>This device has registered its location service in the Arrowhead service registry.</p>
+      <div id="fetch-certificate-stage" class="d-none">
+        <button id="fetch-certificate" type="button" class="main-btn btn btn-primary btn-lg btn-block">
+          <i class="bi-cloud-download"></i>
+          Request Client Certificate
+        </button>
+        <div class="alert alert-primary" role="alert">
+          <div id="token">
+            <h4 class="alert-heading">
+               <span>
+                <i class="bi-check-circle"></i>
+                Power of Attorney successfully saved!
+              </span>
+            </h4>
+            <p>
+              This power of attorney authorizes the device to onboard to an Arrowhead cloud.
+            </p>
+            <hr/>
+            <div class="btn-group" role="group" aria-label="Basic example">
+              <button id="display-jwt" type="button" class="btn btn-outline-primary">JWT</button>
+              <button id="display-json" type="button" class="btn btn-outline-primary">JSON</button>
+            </div>
+            <textarea id="token-text" name="" rows="10"></textarea>
+          </div>
+        </div>
       </div>
 
-    </div>
+      <div id="provide-location-stage" class="d-none">
+        <button id="provide-location" type="button" class="main-btn btn btn-primary btn-lg btn-block">
+          <i class="bi-geo-alt"></i>
+          Provide Location Service
+        </button>
+
+        <div id="certificate-display" class="alert alert-primary" role="alert">
+          <h4 class="alert-heading">
+            <span>
+              <i class="pull-right bi-award"></i>
+              Certificate successfully saved
+            </span>
+          </h4>
+          <p>The following certificate chain has been installed on this device:</p>
+          <hr />
+          <ul class="list-group">
+            <li class="list-group-item">
+              <a class="btn-floating btn-tw btn-sm"><i class="fab bi-award"></i></a>
+              <span id="cert-name-0"><span>
+            </li>
+            <li class="list-group-item">
+              <a class="btn-floating btn-tw btn-sm"><i class="fab bi-award"></i></a>
+              <span id="cert-name-1"><span>
+            </li>
+            <li class="list-group-item">
+              <a class="btn-floating btn-tw btn-sm"><i class="fab bi-award"></i></a>
+              <span id="cert-name-2"><span>
+            </li>
+          </ul>
+          <hr />
+          Please connect to the destination network, <b id="ssid"></b>, and then register the device's location service.</p>
+        </div>
+      </div>
+
+      <div id="providing-location-stage" class="d-none">
+        <div class="alert alert-success" role="alert">
+          <h4 class="alert-heading">
+            <span>
+              <i class="pull-right bi-check-circle"></i>
+              Success!
+            </span>
+          </h4>
+          <p>The device's location service has been registered in the Arrowhead service registry.</p>
+          <hr />
+          <p>Providing location service...</p>
+        </div>
+      </div>
+  </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>

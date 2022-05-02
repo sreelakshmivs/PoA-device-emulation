@@ -11,6 +11,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import com.example.poadevice.domain.OnboardingService;
@@ -20,6 +22,10 @@ import com.example.poadevice.exceptions.InternalServerErrorException;
 import com.example.poadevice.exceptions.UnauthorizedException;
 import com.example.poadevice.repositories.PoaRepository;
 import com.example.poadevice.security.KeyService;
+import org.bouncycastle.asn1.x500.RDN;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -102,7 +108,7 @@ public class Controller {
     }
 
     @GetMapping("/fetch-certificate")
-    public String fetchCertificate() {
+    public List<String> fetchCertificate() {
         final String poa = poaRepository.readLatest().getPoa();
         if (poa == null) {
             throw new UnauthorizedException("No power of attorney present");
@@ -111,13 +117,11 @@ public class Controller {
         final List<String> ahCertificates = onboardingService.requestAhCertificates(poa);
 
         try {
-            saveCertificate(ahCertificates);
+            return saveCertificate(ahCertificates);
         } catch (Exception e) {
             e.printStackTrace();
             throw new InternalServerErrorException("Something went wrong");
         }
-
-        return "OK";
     }
 
     @GetMapping("/provide-location")
@@ -131,10 +135,12 @@ public class Controller {
         return "OK";
     }
 
-
-    private void saveCertificate(List<String> certificateChain)
+    // TODO: Return void instead, this is only for the demo
+    private List<String> saveCertificate(List<String> certificateChain)
             throws IOException, CertificateException, KeyStoreException, NoSuchAlgorithmException {
+
         Certificate[] x509Certificates = new Certificate[certificateChain.size()];
+        List<String> certificateNames = new ArrayList<>();
 
         for (int i = 0; i < certificateChain.size(); i++) {
             final String certificate = certificateChain.get(i);
@@ -144,13 +150,19 @@ public class Controller {
 
             final X509CertificateHolder certificateHolder =
                     (X509CertificateHolder) certificateParser.readObject();
-            final Certificate x509Certificate =
+            final X509Certificate x509Certificate =
                     new JcaX509CertificateConverter()
                             .setProvider(new BouncyCastleProvider())
                             .getCertificate(certificateHolder);
 
             x509Certificates[i] = x509Certificate;
 
+            // TODO: Remove! ===================================================
+            X500Name x500name = certificateHolder.getSubject();
+            RDN cn = x500name.getRDNs(BCStyle.CN)[0];
+            String name = IETFUtils.valueToString(cn.getFirst().getValue());
+            certificateNames.add(name);
+            // =================================================================
             certificateParser.close();
             certificateReader.close();
         }
@@ -167,5 +179,7 @@ public class Controller {
         final FileOutputStream fileOutputStream = new FileOutputStream(CERTIFICATE_FILE);
         keyStore.store(fileOutputStream, KEY_STORE_PASSWORD.toCharArray());
         fileOutputStream.close();
+
+        return certificateNames;
     }
 }
