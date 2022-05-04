@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 @Service
@@ -38,12 +39,11 @@ public class OnboardingService {
 				"keyPair", keyPair);
 
 		try {
-			final CsrResponse csrResponse =
-					restTemplate.postForObject(AH_ONBOARDING_URI, requestBody, CsrResponse.class);
-			return csrResponse.getCertificateChain();
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new BadGatewayException("Failed to onboard");
+			final OnboardingResponse onboardingResponse =
+					restTemplate.postForObject(AH_ONBOARDING_URI, requestBody, OnboardingResponse.class);
+			return onboardingResponse.getCertificateChain();
+		} catch (final HttpClientErrorException e){
+			throw new BadGatewayException(e.getResponseBodyAsString());
 		}
 	}
 }

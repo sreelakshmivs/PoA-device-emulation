@@ -24,6 +24,7 @@ let token = "";
 fetchPoaButton.onclick = () => {
   fetchPoaButton.disabled = true;
   fetch("/device/fetch-poa")
+	.then(validateResponse)
     .then(() => runProgressBar())
     .then(() => fetch("/device/poa"))
     .then((response) => response.text())
@@ -40,6 +41,7 @@ fetchPoaButton.onclick = () => {
 fetchCertificateButton.onclick = () => {
   fetchCertificateButton.disabled = true;
   fetch("/device/fetch-certificate")
+    .then(validateResponse)
     .then((response) => response.json())
     .then((certificateNames) => {
       for (let i = 0; i < certificateNames.length; i++) {
@@ -58,6 +60,7 @@ fetchCertificateButton.onclick = () => {
 provideLocationButton.onclick = () => {
   provideLocationButton.disabled = true;
   fetch("/device/provide-location")
+    .then(validateResponse)
     .then(() => runProgressBar(3000))
     .then(() => {
       hide(provideLocationStage);
@@ -95,9 +98,18 @@ function hide(element) {
   element.classList.add("d-none");
 }
 
+function validateResponse(response) {
+  if (!response.ok) {
+	  return response.json().then(obj => {
+		throw Error(obj.message);
+	  });
+  }
+  return response;
+}
+
 function handleError(e) {
-  console.log(e);
-  alert("Something went wrong");
+	console.log(e);
+	alert(e.message);
 }
 
 function runProgressBar(time = 1500) {
