@@ -39,11 +39,24 @@ public class OnboardingService {
 				"keyPair", keyPair);
 
 		try {
-			final OnboardingResponse onboardingResponse =
+			final OnboardingResponse response =
 					restTemplate.postForObject(AH_ONBOARDING_URI, requestBody, OnboardingResponse.class);
-			return onboardingResponse.getCertificateChain();
+			print(response);
+			return response.getCertificateChain();
 		} catch (final HttpClientErrorException e){
 			throw new BadGatewayException(e.getResponseBodyAsString());
 		}
+	}
+
+	private void print(final OnboardingResponse response) {
+		System.out.println("Onboarding request succeeded");
+		System.out.println("----------------------------");
+		System.out.println("Service endpoints:");
+		System.out.println("  " + response.getOrchestrationService().getService() + ": " + response.getOrchestrationService().getUri());
+		System.out.println("  " + response.getDeviceRegistry().getService() + ": " + response.getDeviceRegistry().getUri());
+		System.out.println("  " + response.getSystemRegistry().getService() + ": " + response.getSystemRegistry().getUri());
+		System.out.println("  " + response.getServiceRegistry().getService() + ": " + response.getServiceRegistry().getUri());
+		System.out.println("Certificate chain:");
+		System.out.println("  " + response.getCertificateChain());
 	}
 }

@@ -94,7 +94,7 @@ public class Controller {
         } catch (Exception e) {
             e.printStackTrace();
             throw new BadGatewayException(
-                    "Failed to retrieve PoA from Arrowhead PoaOnboarding controller");
+                    "Failed to retrieve PoA from subcontractor");
         }
     }
 
