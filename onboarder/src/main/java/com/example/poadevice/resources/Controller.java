@@ -3,7 +3,6 @@ package com.example.poadevice.resources;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.StringReader;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -15,6 +14,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.PreDestroy;
 import com.example.poadevice.domain.OnboardingService;
 import com.example.poadevice.domain.Poa;
 import com.example.poadevice.exceptions.BadGatewayException;
@@ -73,6 +73,14 @@ public class Controller {
         return "OK";
     }
 
+    private Process locationProviderProcess = null;
+
+    @PreDestroy
+    public void preDestroy() {
+		System.out.println("Destroying locationProviderProcess...");
+        locationProviderProcess.destroy();
+    }
+
     /**
      * Prompt this system to fetch a PoA from a subcontractor.
      *
@@ -127,11 +135,14 @@ public class Controller {
     @GetMapping("/provide-location")
     public String onboard() throws IOException {
 
-        final Process proc =
+        if (locationProviderProcess != null) {
+            throw new UnauthorizedException("A location provider is already running!");
+        }
+
+        locationProviderProcess =
                 new ProcessBuilder("java", "-Dserver.ssl.key-store=file:" + CERTIFICATE_FILE,
                         "-jar", LOCATION_PROVIDER_JAR).start();
-        final OutputStream out = proc.getOutputStream();
-        out.flush();
+
         return "OK";
     }
 
