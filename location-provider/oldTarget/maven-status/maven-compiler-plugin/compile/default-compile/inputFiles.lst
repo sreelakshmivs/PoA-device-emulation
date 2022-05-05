@@ -1,0 +1,9 @@
+/home/nicnys/Projects/arrowhead/poa/device/location-provider/src/main/java/eu/arrowhead/application/skeleton/provider/ProviderApplicationInitListener.java
+/home/nicnys/Projects/arrowhead/poa/device/location-provider/src/main/java/eu/arrowhead/application/skeleton/provider/security/ProviderSecurityConfig.java
+/home/nicnys/Projects/arrowhead/poa/device/location-provider/src/main/java/eu/arrowhead/application/skeleton/provider/security/ProviderAccessControlFilter.java
+/home/nicnys/Projects/arrowhead/poa/device/location-provider/src/main/java/ai/aitia/demo/car_provider/CarProviderMain.java
+/home/nicnys/Projects/arrowhead/poa/device/location-provider/src/main/java/eu/arrowhead/application/skeleton/provider/security/ProviderTokenSecurityFilter.java
+/home/nicnys/Projects/arrowhead/poa/device/location-provider/src/main/java/ai/aitia/demo/car_provider/CarProviderConstants.java
+/home/nicnys/Projects/arrowhead/poa/device/location-provider/src/main/java/ai/aitia/demo/car_provider/entity/Car.java
+/home/nicnys/Projects/arrowhead/poa/device/location-provider/src/main/java/ai/aitia/demo/car_provider/controller/CarServiceController.java
+/home/nicnys/Projects/arrowhead/poa/device/location-provider/src/main/java/ai/aitia/demo/car_provider/dto/Coordinates.java
