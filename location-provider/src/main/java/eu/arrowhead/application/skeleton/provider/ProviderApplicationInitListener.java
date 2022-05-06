@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 import ai.aitia.arrowhead.application.library.ArrowheadService;
 import ai.aitia.arrowhead.application.library.config.ApplicationInitListener;
 import ai.aitia.arrowhead.application.library.util.ApplicationCommonConstants;
-import ai.aitia.demo.location_provider.CarProviderConstants;
+import ai.aitia.demo.location_provider.LocationProviderConstants;
 import eu.arrowhead.application.skeleton.provider.security.ProviderSecurityConfig;
 import eu.arrowhead.common.CommonConstants;
 import eu.arrowhead.common.Utilities;
@@ -82,9 +82,7 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 		}		
 		
 		//Register service into ServiceRegistry
-		ServiceRegistryRequestDTO locationServiceRequest = createServiceRegistryRequest(CarProviderConstants.LOCATION_SERVICE_DEFINITION,  CarProviderConstants.LOCATION_URI, HttpMethod.GET);
-		// getCarServiceRequest.getMetadata().put(CarProviderConstants.REQUEST_PARAM_KEY_BRAND, CarProviderConstants.REQUEST_PARAM_BRAND);
-		// getCarServiceRequest.getMetadata().put(CarProviderConstants.REQUEST_PARAM_KEY_COLOR, CarProviderConstants.REQUEST_PARAM_COLOR);
+		ServiceRegistryRequestDTO locationServiceRequest = createServiceRegistryRequest(LocationProviderConstants.LOCATION_SERVICE_DEFINITION,  LocationProviderConstants.LOCATION_URI, HttpMethod.GET);
 		arrowheadService.forceRegisterServiceToServiceRegistry(locationServiceRequest);
 	}
 	
@@ -92,7 +90,7 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 	@Override
 	public void customDestroy() {
 		//Unregister service
-		arrowheadService.unregisterServiceFromServiceRegistry(CarProviderConstants.LOCATION_SERVICE_DEFINITION, CarProviderConstants.LOCATION_URI);
+		arrowheadService.unregisterServiceFromServiceRegistry(LocationProviderConstants.LOCATION_SERVICE_DEFINITION, LocationProviderConstants.LOCATION_URI);
 	}
 	
 	//=================================================================================================
@@ -138,19 +136,19 @@ public class ProviderApplicationInitListener extends ApplicationInitListener {
 		if (sslEnabled && tokenSecurityFilterEnabled) {
 			systemRequest.setAuthenticationInfo(Base64.getEncoder().encodeToString(arrowheadService.getMyPublicKey().getEncoded()));
 			serviceRegistryRequest.setSecure(ServiceSecurityType.TOKEN.name());
-			serviceRegistryRequest.setInterfaces(List.of(CarProviderConstants.INTERFACE_SECURE));
+			serviceRegistryRequest.setInterfaces(List.of(LocationProviderConstants.INTERFACE_SECURE));
 		} else if (sslEnabled) {
 			systemRequest.setAuthenticationInfo(Base64.getEncoder().encodeToString(arrowheadService.getMyPublicKey().getEncoded()));
 			serviceRegistryRequest.setSecure(ServiceSecurityType.CERTIFICATE.name());
-			serviceRegistryRequest.setInterfaces(List.of(CarProviderConstants.INTERFACE_SECURE));
+			serviceRegistryRequest.setInterfaces(List.of(LocationProviderConstants.INTERFACE_SECURE));
 		} else {
 			serviceRegistryRequest.setSecure(ServiceSecurityType.NOT_SECURE.name());
-			serviceRegistryRequest.setInterfaces(List.of(CarProviderConstants.INTERFACE_INSECURE));
+			serviceRegistryRequest.setInterfaces(List.of(LocationProviderConstants.INTERFACE_INSECURE));
 		}
 		serviceRegistryRequest.setProviderSystem(systemRequest);
 		serviceRegistryRequest.setServiceUri(serviceUri);
 		serviceRegistryRequest.setMetadata(new HashMap<>());
-		serviceRegistryRequest.getMetadata().put(CarProviderConstants.HTTP_METHOD, httpMethod.name());
+		serviceRegistryRequest.getMetadata().put(LocationProviderConstants.HTTP_METHOD, httpMethod.name());
 		return serviceRegistryRequest;
 	}
 }

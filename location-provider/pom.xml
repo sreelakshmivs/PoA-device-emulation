@@ -9,7 +9,7 @@
 	</parent>
 	
 	<artifactId>location-provider</artifactId>
-	<name>Arrowhead Demo Car Provider</name>
+	<name>Arrowhead Location Provider</name>
 	
 	<dependencies>
 		<dependency>

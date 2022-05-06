@@ -24,7 +24,7 @@ let token = "";
 fetchPoaButton.onclick = () => {
   fetchPoaButton.disabled = true;
   fetch("/device/fetch-poa")
-	.then(validateResponse)
+    .then(validateResponse)
     .then(() => runProgressBar())
     .then(() => fetch("/device/poa"))
     .then((response) => response.text())
@@ -59,7 +59,17 @@ fetchCertificateButton.onclick = () => {
 
 provideLocationButton.onclick = () => {
   provideLocationButton.disabled = true;
-  fetch("/device/provide-location")
+  getLocation()
+    .then((coordinates) => {
+      return fetch("/device/provide-location", {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify(coordinates),
+      });
+    })
     .then(validateResponse)
     .then(() => runProgressBar(3000))
     .then(() => {
@@ -100,16 +110,16 @@ function hide(element) {
 
 function validateResponse(response) {
   if (!response.ok) {
-	  return response.json().then(obj => {
-		throw Error(obj.message);
-	  });
+    return response.json().then((obj) => {
+      throw Error(obj.message);
+    });
   }
   return response;
 }
 
 function handleError(e) {
-	console.log(e);
-	alert(e.message);
+  e.stack;
+  alert(e.message);
 }
 
 function runProgressBar(time = 1500) {
@@ -121,4 +131,16 @@ function runProgressBar(time = 1500) {
     hide(progressBarContainer);
     show(contents);
   });
+}
+
+function getLocation() {
+  if (!navigator.geolocation) {
+    throw new Error("Geolocation is not supported by this browser");
+  }
+  return new Promise((resolve, reject) =>
+    navigator.geolocation.getCurrentPosition((result) => {
+		const coords = result.coords;
+		resolve({longitude: coords.longitude, latitude: coords.latitude});
+	}, reject)
+  );
 }
